@@ -13,7 +13,23 @@ namespace Mission11_Diamond.Controllers
         public BookStoreController(BookstoreDbContext temp) => _bookContext = temp;
 
         [HttpGet]
-        public IEnumerable<Book> GetBooks() => _bookContext.Books.ToList();
+        public IActionResult GetBooks(int pageHowMany = 5, int pageNumber = 0)
+        {
+            var something = _bookContext.Books
+                .Skip((pageNumber - 1) * pageHowMany)
+                .Take(pageHowMany)
+                .ToList();   
+            
+            var totalNumBooks = _bookContext.Books.Count();
+
+            var theObject = new
+            {
+                Books = something,
+                TotalNumBooks = totalNumBooks
+            };
+            
+            return Ok(theObject);
+        }
         
         // [HttpGet]
         // public IEnumerable<Book> GetFunctionalBooks() => _bookContext.Book.Where(p => p.ProjectFunctionalityStatus == "Functional").ToList();
