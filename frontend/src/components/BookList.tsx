@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Book } from "../types/Book";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 function BookList ({selectedCategories} : {selectedCategories: string[]}) {
     const [books, setBooks] = useState<Book[]>([]);
@@ -10,6 +11,8 @@ function BookList ({selectedCategories} : {selectedCategories: string[]}) {
     const [totalPages, setTotalPages] = useState<number>(0);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const navigate = useNavigate();
+    const { addToCart } = useCart();
+    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -41,6 +44,19 @@ function BookList ({selectedCategories} : {selectedCategories: string[]}) {
             : b.title.localeCompare(a.title);
     });
 
+    const handleAddToCart = (book: Book) => {
+        const cartItem = {
+            bookId: book.bookID,
+            title: book.title,
+            price: parseFloat(book.price.toFixed(2)),
+            quantity: 1 // Add a quantity field
+        };
+    
+        addToCart(cartItem);
+        setShowToast(true); // Show toast
+        setTimeout(() => setShowToast(false), 3000); // Toast timeout
+    };
+
     return (
         <>
             <button className="btn btn-primary mb-3" onClick={toggleSortOrder}>
@@ -62,13 +78,22 @@ function BookList ({selectedCategories} : {selectedCategories: string[]}) {
                         </ul>
                         <button 
                             className="btn btn-success" 
-                            onClick={() => navigate(`/donate/${p.author}/${p.bookID}`)}
+                            onClick={() => handleAddToCart(p)}
+                            // onClick={() => navigate(`/donate/${p.author}/${p.bookID}`)}
                             >
-                            Donate
+                            Add to Cart
                         </button>
                     </div>
                 </div>
             )}
+
+            {/* Toast Notification */}
+            <div className={`toast ${showToast ? "show" : "hide"}`} style={{
+                position: "fixed", bottom: "20px", right: "20px", background: "#28a745",
+                color: "white", padding: "10px 15px", borderRadius: "8px"
+            }}>
+                📚 Added to Cart!
+            </div>
 
             <br />
 

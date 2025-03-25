@@ -14,7 +14,7 @@ function DonatePage () {
         const newItem: CartItem = {
             bookId: Number(bookId),
             author: author || "No Author Found",
-            donationAmount,
+            donationAmount
         };
         addToCart(newItem);
         navigate('/cart');
