@@ -13,12 +13,15 @@ function DonatePage () {
     const handleAddToCart = () => {
         const newItem: CartItem = {
             bookId: Number(bookId),
+            title: `Donation for ${author}`,
+            price: donationAmount,
+            quantity: 1,
             author: author || "No Author Found",
             donationAmount
         };
         addToCart(newItem);
         navigate('/cart');
-        }
+    }
     
 
     return (

@@ -3,5 +3,6 @@ export interface CartItem {
     bookId: number;
     title: string;
     price: number;
-    // donationAmount: number;
+    donationAmount?: number;
+    author?: string;
 }
