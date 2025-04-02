@@ -2,37 +2,39 @@ import { useEffect, useState } from "react";
 import { Book } from "../types/Book";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { fetchBooks } from "../api/BooksAPI";
+import Pagination from "./Pagination";
 
 function BookList ({selectedCategories} : {selectedCategories: string[]}) {
     const [books, setBooks] = useState<Book[]>([]);
     const [pageSize, setPageSize] = useState<number>(5);
     const [pageNumber, setPageNumber] = useState<number>(1);
-    const [totalItems, setTotalItems] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const navigate = useNavigate();
     const { addToCart } = useCart();
     const [showToast, setShowToast] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchBooks = async () => {
+        const loadBooks = async () => {
+            try {
+                setLoading(true);
+                const data = await fetchBooks(pageSize, pageNumber, selectedCategories);
+                setBooks(data.books);
+                setTotalPages(Math.ceil(data.totalNumBooks / pageSize));
+            } catch (error) {
+                setError((error as Error).message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadBooks();
+    }, [pageSize, pageNumber, selectedCategories]);
 
-            const categoryParams = selectedCategories
-                .map((cat) => `projectTypes=${encodeURIComponent(cat)}`)
-                .join('&');
-
-            const response = await fetch(`http://localhost:4000/api/BookStore?pageHowMany=${pageSize}&pageNumber=${pageNumber}${selectedCategories.length ? `&${categoryParams}` : ''}`,
-            {
-                credentials: 'include'
-            });
-
-            const data = await response.json();
-            setBooks(data.books);
-            setTotalItems(data.totalNumBooks);
-            setTotalPages(Math.ceil(totalItems / pageSize));
-        }
-        fetchBooks();
-    }, [pageSize, pageNumber, totalItems, selectedCategories]);
+    if (loading) return <p>Loading Books...</p>
+    if (error) return <p className="text-red-500">Error: {error}</p>
 
     const toggleSortOrder = () => {
         setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
@@ -96,35 +98,16 @@ function BookList ({selectedCategories} : {selectedCategories: string[]}) {
             </div>
 
             <br />
-
-            <button disabled={pageNumber === 1} onClick={() => setPageNumber(pageNumber - 1)}>Previous</button>
-
-            {
-                [...Array(totalPages)].map((_, i) => (
-                <button key={i + 1} onClick={() => setPageNumber(i + 1)} disabled={pageNumber === (i + 1)}>
-                    {i + 1}
-                </button>
-                ))}
-
-            <button disabled={pageNumber === totalPages} onClick={() => setPageNumber(pageNumber + 1)}>Next</button>
-
-            <br />
-
-            <label htmlFor="">
-                Results Per Page: 
-                <select 
-                value={pageSize} 
-                onChange={
-                    (p) => {
-                        setPageSize(Number(p.target.value));
-                        setPageNumber(1);
-                }}>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                </select>
-            </label>
+            
+            <Pagination 
+                currentPage={pageNumber}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageChange={setPageNumber}
+                onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setPageNumber(1);
+                }}/>
         </>
     );
 }
